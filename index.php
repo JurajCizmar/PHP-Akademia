@@ -26,9 +26,14 @@ declare(strict_types=1);
 <pre>
 <?php
 
-function writetolog(string $fileName, string $content){
+function writetolog(string $fileName, string $content, bool $isLate){
 
-    file_put_contents($fileName, $content, FILE_APPEND);
+    if (!$isLate){
+        file_put_contents($fileName, $content . "\n", FILE_APPEND);
+
+    } else {
+        file_put_contents($fileName, $content . ", student is late.\n", FILE_APPEND);
+    }
 }
 
 function getlog(string $fileName){
@@ -42,7 +47,7 @@ function resetlog(string $fileName){
 }
 
 
-$fileDate = date("d-m-Y H:i:s") . "\n";
+$fileDate = date("l d.m.Y H:i:s");
 $displayDate = date('l jS \of F Y H:i:s A');
 $file = "TimeLog.txt";
 
@@ -51,7 +56,22 @@ echo "Today is " . $displayDate . "<hr>";
 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['attendanceButton'])){
-    writetolog($file, $fileDate, true);
+
+    $hour = date("H");
+
+    if ($hour >= 8 && $hour < 20){
+        $isLate = true;
+    } else {
+        $isLate = false;
+    }
+
+    if ($hour >= 20){
+
+        die("Attendance at this time is not possible :| ");
+
+    } else {
+        writetolog($file, $fileDate, $isLate);
+    }
 
 } elseif ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['resetButton'])){
     resetlog($file);
@@ -59,10 +79,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['attendanceButton'])){
 
 $fileContent = getlog($file);
 echo $fileContent; 
-
-$hour = date("H");
-
-
 
 ?>
 </pre>

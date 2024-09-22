@@ -28,12 +28,10 @@ declare(strict_types=1);
 
 function writetolog(string $fileName, string $content, bool $isLate){
 
-    if (!$isLate){
-        file_put_contents($fileName, $content . "\n", FILE_APPEND);
-
-    } else {
-        file_put_contents($fileName, $content . ", student is late.\n", FILE_APPEND);
-    }
+    $content .= $isLate? ", student is late." : "";
+    $content .= "\n";
+    
+    file_put_contents($fileName, $content, FILE_APPEND);
 }
 
 function getlog(string $fileName){
@@ -77,8 +75,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['attendanceButton'])){
     resetlog($file);
 }
 
-$fileContent = getlog($file);
-echo $fileContent; 
+if (file_exists($file)){
+    $fileContent = getlog($file);
+    echo $fileContent; 
+}
 
 ?>
 </pre>

@@ -40,7 +40,7 @@ function writetolog(string $fileName, string $studentsName, string $content){
     $hour = date("H");
     $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
 
-    if ($hour >= 20){
+    if ($hour >= 22){
         die("Attendance at this time is not possible :| ");
 
     } else {
@@ -63,7 +63,8 @@ function resetlog(string $fileName){
 
 $fileDate = date("l d.m.Y H:i:s");
 $displayDate = date('l jS \of F Y H:i:s A');
-$fileName = "TimeLog.txt";
+$timeLogFile = "TimeLog.txt";
+$studentsJsonFile = "students.json"; 
 $errors = false;
 
 echo "<hr>" . "Hello :)" . "\n";
@@ -75,7 +76,26 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     if (isset($_POST["submit"]) && !empty($_POST["name"])) {
         
         $studentsName = htmlspecialchars($_POST["name"]);        
-        writetolog($fileName, $studentsName, $fileDate);
+        writetolog($timeLogFile, $studentsName, $fileDate);
+
+
+
+        if (file_exists($studentsJsonFile) && !filesize($studentsJsonFile) == 0){
+
+            $json_data = file_get_contents($studentsJsonFile);
+            $decoded_json_data = json_decode($json_data, true);
+
+            $student[$studentsName] = 0;
+            $mergedArray = array_merge($decoded_json_data, $student);
+
+            $encoded_data = json_encode($mergedArray, JSON_PRETTY_PRINT);
+            file_put_contents($studentsJsonFile, $encoded_data);
+        
+        } else {
+            $student[$studentsName] = 0;
+            $encoded_data = json_encode($student, JSON_PRETTY_PRINT);
+            file_put_contents($studentsJsonFile, $encoded_data);
+        }
 
     } elseif (isset($_POST["submit"]) && empty($_POST["name"])){
         echo "Fill in the student's name please.";
@@ -83,19 +103,33 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $errors = true;
 
     } elseif (isset($_POST["resetButton"])){
-        resetlog($fileName);
+        resetlog($timeLogFile);
+        resetlog($studentsJsonFile);
     }
 
 } elseif ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["name"])){
 
     $studentsName = htmlspecialchars($_GET["name"]);
-    writetolog($fileName, $studentsName, $fileDate);
+    writetolog($timeLogFile, $studentsName, $fileDate);
+
+
+
+
+
+
+
+
+
+
 
 }
 
-if (file_exists($fileName) && !$errors){
-    $fileContent = getlog($fileName);
-    echo $fileContent;
+if (file_exists("students.json") && !$errors){
+    // $fileContent = getlog($timeLogFile);
+    // echo $fileContent;
+    $json_data = file_get_contents("students.json");
+    $decoded_data = json_decode($json_data, true, 512, JSON_OBJECT_AS_ARRAY);
+    print_r($decoded_data);
 }
 
 ?>

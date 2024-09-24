@@ -35,14 +35,20 @@ declare(strict_types=1);
 <pre>
 <?php
 
-function writetolog(string $fileName, string $studentsName, string $content, bool $isLate){
+function writetolog(string $fileName, string $studentsName, string $content){
 
+    $hour = date("H");
+    $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
 
+    if ($hour >= 20){
+        die("Attendance at this time is not possible :| ");
 
-    $content .= $isLate? ", " . $studentsName . " is late." : " " . $studentsName;
-    $content .= "\n";
-    
-    file_put_contents($fileName, $content, FILE_APPEND);
+    } else {
+        $content .= $isLate? ", " . $studentsName . " is late." : " " . $studentsName;
+        $content .= "\n";
+
+        file_put_contents($fileName, $content, FILE_APPEND);
+    }
 }
 
 function getlog(string $fileName){
@@ -68,16 +74,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
     if (isset($_POST["submit"]) && !empty($_POST["name"])) {
         
-        $studentsName = htmlspecialchars($_POST["name"]);
-        $hour = date("H");
-        $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
-
-        if ($hour >= 20){
-            die("Attendance at this time is not possible :| ");
-
-        } else {
-            writetolog($fileName, $studentsName, $fileDate, $isLate);
-        }
+        $studentsName = htmlspecialchars($_POST["name"]);        
+        writetolog($fileName, $studentsName, $fileDate);
 
     } elseif (isset($_POST["submit"]) && empty($_POST["name"])){
         echo "Fill in the student's name please.";
@@ -91,17 +89,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 } elseif ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["name"])){
 
     $studentsName = htmlspecialchars($_GET["name"]);
-    
-    $hour = date("H");
-    $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
+    writetolog($fileName, $studentsName, $fileDate);
 
-    if ($hour >= 20){
-        die("Attendance at this time is not possible :| ");
-
-    } else {
-        writetolog($fileName, $studentsName, $fileDate, $isLate);
-    }
-    
 }
 
 if (file_exists($fileName) && !$errors){

@@ -35,7 +35,7 @@ declare(strict_types=1);
 <pre>
 <?php
 
-function writetolog(string $fileName, string $nameOfStudent, string $content){
+function write_to_log(string $fileName, string $nameOfStudent, string $content){
 
     $hour = date("H");
     $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
@@ -51,62 +51,29 @@ function writetolog(string $fileName, string $nameOfStudent, string $content){
     }
 }
 
-function write_student_to_json(string $nameOfStudent, string $jsonFileName){
-
-    if (file_exists($jsonFileName) && filesize($jsonFileName) != 0){
-
-        $json_data = file_get_contents($jsonFileName);
-        $studentsFromJson = json_decode($json_data, true);
-
-        $student[$nameOfStudent] = array_key_exists($nameOfStudent, $studentsFromJson) ? 
-        ++$studentsFromJson[$nameOfStudent] : 1 ;
-
-        $mergedArray = array_merge($studentsFromJson, $student);
-        $encoded_data = json_encode($mergedArray, JSON_PRETTY_PRINT);
-    
-    } else {
-        $student[$nameOfStudent] = 1;
-        $encoded_data = json_encode($student, JSON_PRETTY_PRINT);
-    }
-    file_put_contents($jsonFileName, $encoded_data);
-}
-
-function write_arrival_to_json(string $date, string $jsonFileName){
-
-    if (file_exists($jsonFileName) && filesize($jsonFileName) != 0){
-
-        $json_data = file_get_contents($jsonFileName);
-        $arrivalsFromJson = json_decode($json_data, true);
-
-        array_push($arrivalsFromJson, $date);
-        $encoded_data = json_encode($arrivalsFromJson, JSON_PRETTY_PRINT);
-    
-    } else {
-        $encoded_data = json_encode([$date], JSON_PRETTY_PRINT);
-    }
-    file_put_contents($jsonFileName, $encoded_data);
-
-}
-
-function getlog(string $fileName){
+function get_log(string $fileName){
 
     return file_get_contents($fileName);
 }
 
-function resetlog(string $fileName){
+function reset_log(string $fileName){
 
     file_put_contents($fileName, "");
 }
 
+require_once "Classes/Student.php";
+require_once "Classes/Arrivals.php";
+
 $fileDate = date("l d.m.Y H:i:s");
-$displayDate = date('l jS \of F Y H:i:s A');
 $timeLogFile = "TimeLog.txt";
 $studentsJsonFile = "students.json";
 $arrivalsJsonFile = "arrivals.json"; 
 $errors = false;
+$arrivals = new Arrivals($arrivalsJsonFile);
+
 
 echo "<hr>" . "Hello :)" . "\n";
-echo "Today is " . $displayDate . "<hr>";
+echo "Today is " . date('l jS \of F Y H:i:s A') . "<hr>";
 
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -114,11 +81,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     if (isset($_POST["submit"]) && !empty($_POST["name"])) {
 
         $nameOfStudent = htmlspecialchars($_POST["name"]);        
-        writetolog($timeLogFile, $nameOfStudent, $fileDate);
+        write_to_log($timeLogFile, $nameOfStudent, $fileDate);
 
-        write_arrival_to_json($fileDate, $arrivalsJsonFile);
+        $arrivals->write_arrival_to_json($fileDate);
 
-        write_student_to_json($nameOfStudent, $studentsJsonFile);
+        Student::write_student_to_json($nameOfStudent, $studentsJsonFile);
 
     } elseif (isset($_POST["submit"]) && empty($_POST["name"])){
         echo "Fill in the student's name please.";
@@ -126,9 +93,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         $errors = true;
 
     } elseif (isset($_POST["resetButton"])){
-        resetlog($timeLogFile);
-        resetlog($studentsJsonFile);
-        resetlog($arrivalsJsonFile);
+        reset_log($timeLogFile);
+        reset_log($studentsJsonFile);
+        reset_log($arrivalsJsonFile);
     }
 
 } 
@@ -136,30 +103,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 if ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["name"])){
 
     $nameOfStudent = htmlspecialchars($_GET["name"]);
-    writetolog($timeLogFile, $nameOfStudent, $fileDate);
 
-    write_arrival_to_json($arrivalsJsonFile, $fileDate);
+    write_to_log($timeLogFile, $nameOfStudent, $fileDate);
 
-    write_student_to_json($nameOfStudent, $studentsJsonFile);
-}
+    $arrivals->write_arrival_to_json($fileDate);
 
-
-if (file_exists($arrivalsJsonFile) && filesize($arrivalsJsonFile) != 0){
-
-    $json_data = file_get_contents($arrivalsJsonFile);
-    $arrivalsFromJson = json_decode($json_data, true);
-    //          $fruits as $index => $fruit
-    foreach ($arrivalsFromJson as $index => $arrival){
-        
-        if (strtotime($arrival)){
-
-            $hour = date('H', strtotime($arrival));
-            $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
-            $arrivalsFromJson[$index] = $isLate ? $arrival . ", meskanie": $arrival . "";
-        }
-    }
-    $encoded_data = json_encode($arrivalsFromJson, JSON_PRETTY_PRINT);
-    file_put_contents($arrivalsJsonFile, $encoded_data);
+    Student::write_student_to_json($nameOfStudent, $studentsJsonFile);
 }
 
 if (file_exists("students.json") && !$errors){

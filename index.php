@@ -38,6 +38,8 @@ declare(strict_types=1);
 function write_to_log(string $fileName, string $nameOfStudent, string $content){
 
     $hour = date("H");
+    // REVIEW - $isLate používaš tu, ale aj v Arrivals.php, nebolo by od veci vytvoriť si nejakú class na všeobecné helper funkcie, aby sa ti v kóde neopakovala podmienka ($hour >= 8 && $hour < 20)
+    // REVIEW - A inak táto časť " ? true : false" je zbytočná, pretože tento statement "($hour >= 8 && $hour < 20)" rovno vracia boolean, takže nepotrebuješ ternary operator
     $isLate = ($hour >= 8 && $hour < 20) ? true : false ;
 
     if ($hour >= 22){
@@ -102,6 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["name"])){
     Student::write_student_to_json($nameOfStudent, $studentsJsonFile);
 }
 
+// REVIEW - Tu by sa hodilo dať $studentsJsonFile namiesto hardcoded values
 if (file_exists("students.json") && !$errors){
 
     $json_data = file_get_contents("students.json");

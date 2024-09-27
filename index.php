@@ -51,11 +51,6 @@ function write_to_log(string $fileName, string $nameOfStudent, string $content){
     }
 }
 
-function get_log(string $fileName){
-
-    return file_get_contents($fileName);
-}
-
 function reset_log(string $fileName){
 
     file_put_contents($fileName, "");
@@ -67,10 +62,8 @@ require_once "Classes/Arrivals.php";
 $fileDate = date("l d.m.Y H:i:s");
 $timeLogFile = "TimeLog.txt";
 $studentsJsonFile = "students.json";
-$arrivalsJsonFile = "arrivals.json"; 
 $errors = false;
-$arrivals = new Arrivals($arrivalsJsonFile);
-
+$arrivals = new Arrivals("arrivals.json");
 
 echo "<hr>" . "Hello :)" . "\n";
 echo "Today is " . date('l jS \of F Y H:i:s A') . "<hr>";
@@ -95,15 +88,13 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     } elseif (isset($_POST["resetButton"])){
         reset_log($timeLogFile);
         reset_log($studentsJsonFile);
-        reset_log($arrivalsJsonFile);
+        reset_log($arrivals->getJsonfileName());
     }
-
 } 
 
 if ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["name"])){
 
     $nameOfStudent = htmlspecialchars($_GET["name"]);
-
     write_to_log($timeLogFile, $nameOfStudent, $fileDate);
 
     $arrivals->write_arrival_to_json($fileDate);
@@ -112,8 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET" && !empty($_GET["name"])){
 }
 
 if (file_exists("students.json") && !$errors){
-    // $fileContent = getlog($timeLogFile);
-    // echo $fileContent;
+
     $json_data = file_get_contents("students.json");
     $decoded_data = json_decode($json_data, true);
     print_r($decoded_data);
